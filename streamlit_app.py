@@ -1,122 +1,57 @@
 import streamlit as st
 import pandas as pd
+import re
 
 st.set_page_config(
-    page_title="Tratamento Antimicrobiano - Protocolos Brasileiros", 
+    page_title="Tratamento Antimicrobiano - Protocolos do Complexo Hospitalar dos Estivadores", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Título e descrição
-st.title("Tratamento Antimicrobiano - Protocolos Brasileiros")
-st.markdown("Guia de tratamento para infecções em pacientes hospitalizados baseado em protocolos de hospitais brasileiros de referência")
+# Função para converter markdown para HTML
+def md_to_html(md_text):
+    html_text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', md_text)
+    html_text = html_text.replace('\n', '<br>')
+    return html_text
 
-# Dados da tabela
-data = {
-    "Foco Infeccioso": [
-        "Pneumonia", 
-        "Infecções do Trato Urinário", 
-        "Infecções de Pele e Partes Moles",
-        "Infecções Intra-abdominais", 
-        "Sepse e Choque Séptico", 
-        "Profilaxia Cirúrgica",
-        "Meningite", 
-        "Infecções de Corrente Sanguínea e Endocardites"
-    ],
-    "Tratamento para Infecção Comunitária (Hospitalizado)": [
-        """**Paciente internado não-UTI:**
+# Título e descrição
+st.markdown("""
+    <h1 style='text-align: center; color: #0047AB;'>Tratamento Antimicrobiano</h1>
+    <h3 style='text-align: center; color: #4682B4; margin-bottom: 30px;'>Protocolos Complexo Hospitalar dos Estivadores</h3>
+    <div style='text-align: center; padding: 0 50px; margin-bottom: 30px;'>
+    Guia de tratamento para infecções em pacientes hospitalizados
+    </div>
+""", unsafe_allow_html=True)
+
+# Dados da tabela - estrutura de dados simplificada
+focos_infecciosos = [
+    "Pneumonia", 
+    "Infecções do Trato Urinário", 
+    "Infecções de Pele e Partes Moles",
+    "Infecções Intra-abdominais", 
+    "Sepse e Choque Séptico", 
+    "Profilaxia Cirúrgica",
+    "Meningite", 
+    "Infecções de Corrente Sanguínea e Endocardites",
+    "Infecções em Gestantes",
+    "Infecções em Puérperas",
+    "Sepse Neonatal"
+]
+
+# Dicionário de tratamentos para cada foco
+tratamentos = {
+    "Pneumonia": {
+        "comunitario": """**Paciente internado não-UTI:**
 - Ceftriaxona 1-2g IV 1x/dia + Azitromicina 500mg IV/VO 1x/dia OU
-- Levofloxacino 750mg IV/VO 1x/dia
+- Levofloxacino 750mg IV/VO 1x/dia (se DPOC)
 
 **Paciente em UTI (PAC grave):**
-- Ceftriaxona 2g IV 1x/dia + Claritromicina 500mg IV 12/12h OU
-- Ampicilina-sulbactam 3g IV 6/6h + Azitromicina 500mg IV 1x/dia
+- Ceftriaxona 2g IV 1x/dia + Claritromicina 500mg IV 12/12h OU Azitromicina 500mg IV 1x/dia
 
 **Se fatores de risco para S. aureus:**
 - Adicionar Oxacilina 2g IV 4/4h OU Vancomicina 15-20mg/kg IV 12/12h""",
         
-        """**ITU complicada hospitalizada:**
-- Ceftriaxona 1-2g IV 1x/dia OU
-- Ciprofloxacino 400mg IV 12/12h OU
-- Ampicilina-sulbactam 3g IV 6/6h
-
-**Pielonefrite (sem fatores de risco para MDR):**
-- Ceftriaxona 1g IV 1x/dia OU
-- Ciprofloxacino 400mg IV 12/12h""",
-        
-        """**Celulite/erisipela complicada:**
-- Oxacilina 2g IV 4/4h OU
-- Cefazolina 2g IV 8/8h OU
-- Clindamicina 600mg IV 8/8h (se alergia a beta-lactâmicos)
-
-**Se suspeita de MRSA comunitário:**
-- Vancomicina 15-20mg/kg IV 12/12h OU
-- Sulfametoxazol-trimetoprima 800/160mg IV 8/8h
-
-**Infecções necrotizantes:**
-- Ampicilina-sulbactam 3g IV 6/6h + Clindamicina 900mg IV 8/8h""",
-        
-        """**Comunitária não grave:**
-- Ampicilina-sulbactam 3g IV 6/6h OU
-- Ceftriaxona 2g IV 1x/dia + Metronidazol 500mg IV 8/8h
-
-**Comunitária grave ou peritonite:**
-- Cefepima 2g IV 8/8h + Metronidazol 500mg IV 8/8h OU
-- Ertapenem 1g IV 1x/dia
-
-**Pancreatite necro-hemorrágica:** 
-- Ciprofloxacino 400mg IV 12/12h + Metronidazol 500mg IV 8/8h OU
-- Piperacilina-tazobactam 4,5g IV 6/6h""",
-        
-        """**Origem comunitária sem foco definido:**
-- Ceftriaxona 2g IV 1x/dia + Azitromicina 500mg IV 1x/dia OU
-- Ampicilina-sulbactam 3g IV 6/6h
-
-**Se suspeita de foco abdominal:**
-- Cefepima 2g IV 8/8h + Metronidazol 500mg IV 8/8h OU
-- Ertapenem 1g IV 1x/dia
-
-**Se suspeita de meningite:**
-- Ceftriaxona 2g IV 12/12h + Vancomicina 15-20mg/kg IV 12/12h + Ampicilina 2g IV 4/4h (>50 anos)""",
-        
-        """**Cirurgias limpas:**
-- Cefazolina 2g IV dose única (até 3 doses em 24h)
-- Para pacientes >120kg: 3g IV
-
-**Cirurgias hepatobiliares:**
-- Cefazolina 2g IV OU
-- Ampicilina-sulbactam 3g IV
-
-**Cirurgias colorretais:**
-- Cefazolina 2g IV + Metronidazol 500mg IV OU
-- Ampicilina-sulbactam 3g IV""",
-        
-        """**Meningite bacteriana comunitária:**
-- Ceftriaxona 2g IV 12/12h + Vancomicina 15-20mg/kg IV 12/12h
-- Adicionar Ampicilina 2g IV 4/4h (>50 anos)
-- Dexametasona 0,15mg/kg IV 6/6h por 2-4 dias (iniciar antes ou com ATB)
-
-**Meningite viral:**
-- Tratamento de suporte
-
-**Se suspeita de HSV:**
-- Aciclovir 10mg/kg IV 8/8h""",
-        
-        """**Bacteremia comunitária:**
-- Oxacilina 2g IV 4/4h (se suspeita de S. aureus) OU
-- Ceftriaxona 2g IV 1x/dia (se suspeita de gram-negativos)
-
-**Endocardite comunitária (S. viridans):**
-- Penicilina G 4 milhões UI IV 4/4h + Gentamicina 3mg/kg/dia IV 1x/dia
-
-**Endocardite comunitária (S. aureus não MRSA):**
-- Oxacilina 2g IV 4/4h (+/- Gentamicina 3mg/kg/dia)
-
-**Endocardite comunitária (Enterococcus):**
-- Ampicilina 2g IV 4/4h + Gentamicina 3mg/kg/dia IV 1x/dia"""
-    ],
-    "Tratamento para Infecção com Risco de Patógeno Hospitalar": [
-        """**Pneumonia hospitalar (<5 dias de internação):**
+        "hospitalar": """**Pneumonia hospitalar (<5 dias de internação):**
 - Cefepima 2g IV 8/8h OU
 - Piperacilina-tazobactam 4,5g IV 6/6h
 
@@ -129,9 +64,20 @@ data = {
 - Linezolida 600mg IV 12/12h
 
 **Se PAV tardia ou risco para multirresistentes:**
-- Meropenem 1g IV 8/8h + Polimixina B 25.000UI/kg/dia IV dividida 12/12h""",
+- Meropenem 1g IV 8/8h + Polimixina B 25.000UI/kg/dia IV dividida 12/12h"""
+    },
+    
+    "Infecções do Trato Urinário": {
+        "comunitario": """**ITU complicada hospitalizada:**
+- Ceftriaxona 1-2g IV 1x/dia OU
+- Ciprofloxacino 400mg IV 12/12h OU
+- Ampicilina-sulbactam 3g IV 6/6h
+
+**Pielonefrite (sem fatores de risco para MDR):**
+- Ceftriaxona 1g IV 1x/dia OU
+- Ciprofloxacino 400mg IV 12/12h""",
         
-        """**ITU relacionada à assistência:**
+        "hospitalar": """**ITU relacionada à assistência:**
 - Cefepima 2g IV 8/8h OU
 - Piperacilina-tazobactam 4,5g IV 6/6h
 
@@ -144,9 +90,23 @@ data = {
 - Vancomicina 15-20mg/kg IV 12/12h (se risco de resistência)
 
 **Se suspeita de candidúria invasiva:**
-- Adicionar Fluconazol 400mg IV/VO 1x/dia""",
+- Adicionar Fluconazol 400mg IV/VO 1x/dia"""
+    },
+    
+    "Infecções de Pele e Partes Moles": {
+        "comunitario": """**Celulite/erisipela complicada:**
+- Oxacilina 2g IV 4/4h OU
+- Cefazolina 2g IV 8/8h OU
+- Clindamicina 600mg IV 8/8h (se alergia a beta-lactâmicos)
+
+**Se suspeita de MRSA comunitário:**
+- Vancomicina 15-20mg/kg IV 12/12h OU
+- Sulfametoxazol-trimetoprima 800/160mg IV 8/8h
+
+**Infecções necrotizantes:**
+- Ampicilina-sulbactam 3g IV 6/6h + Clindamicina 900mg IV 8/8h""",
         
-        """**Infecções hospitalares:**
+        "hospitalar": """**Infecções hospitalares:**
 - Vancomicina 15-20mg/kg IV 12/12h + Cefepima 2g IV 8/8h OU
 - Vancomicina 15-20mg/kg IV 12/12h + Piperacilina-tazobactam 4,5g IV 6/6h
 
@@ -157,9 +117,23 @@ data = {
 - Vancomicina 15-20mg/kg IV 12/12h + Cefepima 2g IV 8/8h + Metronidazol 500mg IV 8/8h
 
 **Infecções em pé diabético graves:**
-- Piperacilina-tazobactam 4,5g IV 6/6h + Vancomicina 15-20mg/kg IV 12/12h""",
+- Piperacilina-tazobactam 4,5g IV 6/6h + Vancomicina 15-20mg/kg IV 12/12h"""
+    },
+    
+    "Infecções Intra-abdominais": {
+        "comunitario": """**Comunitária não grave:**
+- Ampicilina-sulbactam 3g IV 6/6h OU
+- Ceftriaxona 2g IV 1x/dia + Metronidazol 500mg IV 8/8h
+
+**Comunitária grave ou peritonite:**
+- Cefepima 2g IV 8/8h + Metronidazol 500mg IV 8/8h OU
+- Ertapenem 1g IV 1x/dia
+
+**Pancreatite necro-hemorrágica:** 
+- Ciprofloxacino 400mg IV 12/12h + Metronidazol 500mg IV 8/8h OU
+- Piperacilina-tazobactam 4,5g IV 6/6h""",
         
-        """**Infecção intra-abdominal nosocomial:**
+        "hospitalar": """**Infecção intra-abdominal nosocomial:**
 - Piperacilina-tazobactam 4,5g IV 6/6h OU
 - Meropenem 1g IV 8/8h
 
@@ -171,9 +145,22 @@ data = {
 - Anidulafungina 200mg IV dose de ataque, depois 100mg IV 1x/dia
 
 **Peritonite terciária ou pós-operatória:**
-- Meropenem 1g IV 8/8h + Vancomicina 15-20mg/kg IV 12/12h +/- Antifúngico""",
+- Meropenem 1g IV 8/8h + Vancomicina 15-20mg/kg IV 12/12h +/- Antifúngico"""
+    },
+    
+    "Sepse e Choque Séptico": {
+        "comunitario": """**Origem comunitária sem foco definido:**
+- Ceftriaxona 2g IV 1x/dia + Azitromicina 500mg IV 1x/dia OU
+- Ampicilina-sulbactam 3g IV 6/6h
+
+**Se suspeita de foco abdominal:**
+- Cefepima 2g IV 8/8h + Metronidazol 500mg IV 8/8h OU
+- Ertapenem 1g IV 1x/dia
+
+**Se suspeita de meningite:**
+- Ceftriaxona 2g IV 12/12h + Vancomicina 15-20mg/kg IV 12/12h + Ampicilina 2g IV 4/4h (>50 anos)""",
         
-        """**Sepse/choque nosocomial:**
+        "hospitalar": """**Sepse/choque nosocomial:**
 - Meropenem 1g IV 8/8h + Vancomicina 15-20mg/kg IV 12/12h (dose ataque 25-30mg/kg) OU
 - Piperacilina-tazobactam 4,5g IV 6/6h + Vancomicina 15-20mg/kg IV 12/12h + Amicacina 15-20mg/kg IV 1x/dia
 
@@ -182,9 +169,23 @@ data = {
 
 **Se fatores de risco para candidemia invasiva:**
 - Adicionar Anidulafungina 200mg IV dose de ataque, depois 100mg IV 1x/dia OU
-- Micafungina 100mg IV 1x/dia""",
+- Micafungina 100mg IV 1x/dia"""
+    },
+    
+    "Profilaxia Cirúrgica": {
+        "comunitario": """**Cirurgias limpas:**
+- Cefazolina 2g IV dose única (até 3 doses em 24h)
+- Para pacientes >120kg: 3g IV
+
+**Cirurgias hepatobiliares:**
+- Cefazolina 2g IV OU
+- Ampicilina-sulbactam 3g IV
+
+**Cirurgias colorretais:**
+- Cefazolina 2g IV + Metronidazol 500mg IV OU
+- Ampicilina-sulbactam 3g IV""",
         
-        """**Profilaxia em pacientes hospitalizados:**
+        "hospitalar": """**Profilaxia em pacientes hospitalizados:**
 - Mesmos antimicrobianos da profilaxia comunitária
 - Se hospitalização prolongada: considerar Cefuroxima 1,5g IV
 - Se colonização conhecida por MRSA: Vancomicina 15mg/kg IV
@@ -195,9 +196,22 @@ data = {
 **Reoperação recente ou implante de prótese:**
 - Vancomicina 15mg/kg IV + Cefepima 2g IV
 
-**Importante:** Redosagem para cirurgias >3h ou sangramento >1,5L""",
+**Importante:** Redosagem para cirurgias >3h ou sangramento >1,5L"""
+    },
+    
+    "Meningite": {
+        "comunitario": """**Meningite bacteriana comunitária:**
+- Ceftriaxona 2g IV 12/12h + Vancomicina 15-20mg/kg IV 12/12h
+- Adicionar Ampicilina 2g IV 4/4h (>50 anos)
+- Dexametasona 0,15mg/kg IV 6/6h por 2-4 dias (iniciar antes ou com ATB)
+
+**Meningite viral:**
+- Tratamento de suporte
+
+**Se suspeita de HSV:**
+- Aciclovir 10mg/kg IV 8/8h""",
         
-        """**Meningite pós-neurocirurgia/derivação:**
+        "hospitalar": """**Meningite pós-neurocirurgia/derivação:**
 - Vancomicina 15-20mg/kg IV 12/12h + Cefepima 2g IV 8/8h OU
 - Vancomicina 15-20mg/kg IV 12/12h + Meropenem 2g IV 8/8h
 
@@ -206,9 +220,24 @@ data = {
 
 **Meningite fúngica:**
 - Anfotericina B lipossomal 5mg/kg/dia IV +/- Fluconazol intratecal OU
-- Voriconazol 6mg/kg IV 12/12h no 1º dia, depois 4mg/kg IV 12/12h""",
+- Voriconazol 6mg/kg IV 12/12h no 1º dia, depois 4mg/kg IV 12/12h"""
+    },
+    
+    "Infecções de Corrente Sanguínea e Endocardites": {
+        "comunitario": """**Bacteremia comunitária:**
+- Oxacilina 2g IV 4/4h (se suspeita de S. aureus) OU
+- Ceftriaxona 2g IV 1x/dia (se suspeita de gram-negativos)
+
+**Endocardite comunitária (S. viridans):**
+- Penicilina G 4 milhões UI IV 4/4h + Gentamicina 3mg/kg/dia IV 1x/dia
+
+**Endocardite comunitária (S. aureus não MRSA):**
+- Oxacilina 2g IV 4/4h (+/- Gentamicina 3mg/kg/dia)
+
+**Endocardite comunitária (Enterococcus):**
+- Ampicilina 2g IV 4/4h + Gentamicina 3mg/kg/dia IV 1x/dia""",
         
-        """**ICS relacionada a cateter:**
+        "hospitalar": """**ICS relacionada a cateter:**
 - Vancomicina 15-20mg/kg IV 12/12h + Cefepima 2g IV 8/8h OU
 - Vancomicina 15-20mg/kg IV 12/12h + Amicacina 15-20mg/kg IV 1x/dia
 
@@ -222,7 +251,104 @@ data = {
 **Candidemia:**
 - Equinocandina (Anidulafungina 200mg IV, depois 100mg IV 1x/dia OU
 - Micafungina 100mg IV 1x/dia)"""
-    ]
+    },
+    
+    "Infecções em Gestantes": {
+        "comunitario": """**ITU na gestação:**
+- Nitrofurantoína 100mg VO 6/6h (contraindicada no final da gestação) OU
+- Cefalexina 500mg VO 6/6h OU
+- Amoxicilina-clavulanato 500/125mg VO 8/8h
+
+**Pielonefrite na gestação:**
+- Ceftriaxona 1-2g IV 1x/dia OU
+- Ampicilina 2g IV 6/6h + Gentamicina 3-5mg/kg/dia IV 1x/dia
+
+**Pneumonia na gestação:**
+- Ampicilina-sulbactam 3g IV 6/6h OU
+- Ceftriaxona 1-2g IV 1x/dia + Azitromicina 500mg IV/VO 1x/dia
+
+**Antibióticos seguros na gestação:**
+- Penicilinas, cefalosporinas, azitromicina, eritromicina (base)
+- EVITAR: fluoroquinolonas, tetraciclinas, sulfonamidas (final da gestação)""",
+        
+        "hospitalar": """**ITU complicada na gestante hospitalizada:**
+- Ceftriaxona 1g IV 1x/dia OU
+- Ampicilina 2g IV 6/6h + Gentamicina 3-5mg/kg IV 1x/dia (dose única diária)
+
+**Pneumonia hospitalar na gestante:**
+- Cefepima 2g IV 8/8h OU
+- Piperacilina-tazobactam 4,5g IV 6/6h
+
+**Listeriose na gestação:**
+- Ampicilina 2g IV 4/4h +/- Gentamicina 5mg/kg IV 1x/dia
+
+**Corioamnionite:**
+- Ampicilina 2g IV 6/6h + Gentamicina 5mg/kg IV 1x/dia + Metronidazol 500mg IV 8/8h OU
+- Piperacilina-tazobactam 4,5g IV 6/6h"""
+    },
+    
+    "Infecções em Puérperas": {
+        "comunitario": """**Endometrite puerperal:**
+- Ampicilina 2g IV 6/6h + Gentamicina 5mg/kg IV 1x/dia + Metronidazol 500mg IV 8/8h OU
+- Clindamicina 900mg IV 8/8h + Gentamicina 5mg/kg IV 1x/dia
+
+**Infecção de ferida operatória (cesariana):**
+- Cefazolina 2g IV 8/8h OU
+- Ampicilina-sulbactam 3g IV 6/6h
+
+**Mastite puerperal não complicada:**
+- Cefalexina 500mg VO 6/6h OU
+- Dicloxacilina 500mg VO 6/6h
+
+**Mastite puerperal complicada (abscesso):**
+- Oxacilina 2g IV 4/4h OU
+- Cefazolina 2g IV 8/8h""",
+        
+        "hospitalar": """**Endometrite pós-cesariana complicada:**
+- Piperacilina-tazobactam 4,5g IV 6/6h OU
+- Ertapenem 1g IV 1x/dia OU
+- Imipenem 500mg IV 6/6h
+
+**Infecção de ferida operatória complicada:**
+- Vancomicina 15-20mg/kg IV 12/12h + Piperacilina-tazobactam 4,5g IV 6/6h OU
+- Vancomicina 15-20mg/kg IV 12/12h + Cefepima 2g IV 8/8h + Metronidazol 500mg IV 8/8h
+
+**Sepse puerperal grave:**
+- Meropenem 1g IV 8/8h + Vancomicina 15-20mg/kg IV 12/12h +/- Clindamicina 900mg IV 8/8h OU
+- Piperacilina-tazobactam 4,5g IV 6/6h + Vancomicina 15-20mg/kg IV 12/12h"""
+    },
+    
+    "Sepse Neonatal": {
+        "comunitario": """**Sepse neonatal precoce (<72h):**
+- Ampicilina 50mg/kg/dose IV + Gentamicina 4mg/kg/dose IV 1x/dia OU
+- Ampicilina 50mg/kg/dose IV + Cefotaxima 50mg/kg/dose IV 8/8h
+
+**Sepse neonatal tardia (>72h):**
+- Oxacilina 50mg/kg/dose IV 6/6h + Cefotaxima 50mg/kg/dose IV 8/8h OU
+- Oxacilina 50mg/kg/dose IV 6/6h + Amicacina 15mg/kg/dose IV 1x/dia
+
+**Sepse neonatal relacionada a cateter:**
+- Vancomicina 15mg/kg/dose IV 8/8h (ajuste para função renal) + Cefotaxima 50mg/kg/dose IV 8/8h
+
+**Meningite neonatal:**
+- Ampicilina 100mg/kg/dose IV 8/8h + Cefotaxima 50mg/kg/dose IV 8/8h OU
+- Ampicilina 100mg/kg/dose IV 8/8h + Gentamicina 4mg/kg/dose IV 1x/dia""",
+        
+        "hospitalar": """**Sepse neonatal tardia (hospitalar):**
+- Vancomicina 15mg/kg/dose IV 8/8h + Cefepima 50mg/kg/dose IV 8/8h OU
+- Vancomicina 15mg/kg/dose IV 8/8h + Meropenem 20mg/kg/dose IV 8/8h
+
+**Sepse neonatal com foco abdominal:**
+- Ampicilina 50mg/kg/dose IV 6/6h + Gentamicina 4mg/kg/dose IV 1x/dia + Metronidazol 7,5mg/kg/dose IV 8/8h OU
+- Piperacilina-tazobactam 100mg/kg/dose IV 8/8h
+
+**Infecções por Candida no neonato:**
+- Anfotericina B lipossomal 3-5mg/kg/dia IV 1x/dia OU
+- Micafungina 4-10mg/kg/dia IV 1x/dia (>1kg)
+
+**Meningite neonatal hospitalar:**
+- Vancomicina 15mg/kg/dose IV 8/8h + Meropenem 40mg/kg/dose IV 8/8h +/- Anfotericina B lipossomal"""
+    }
 }
 
 # Lista de notas importantes
@@ -241,7 +367,9 @@ notas_importantes = [
     
     "**Duração de tratamento:**\n- Pneumonia: 5-7 dias (comunitária não complicada), 7-10 dias (nosocomial)\n- ITU: 5-7 dias (cistite), 10-14 dias (pielonefrite)\n- Bacteremia: 14 dias (gram-negativos), 14-28 dias (S. aureus)\n- Endocardite: 4-6 semanas\n- Infecções intra-abdominais: 4-7 dias após controle do foco",
     
-    "**Programa de Stewardship:**\n- Reavaliação do antimicrobiano em 48-72h\n- Revisão de dose, via de administração e duração\n- Checagem de interações medicamentosas\n- Discussão multidisciplinar com CCIH/Infectologia em casos complexos"
+    "**Considerações especiais para gestantes:**\n- FDA categorias B/C preferencialmente\n- Evitar tetraciclinas, fluoroquinolonas e sulfonamidas (último trimestre)\n- Aminoglicosídeos: monitorar função renal e níveis séricos quando possível\n- Ajustar doses conforme alterações fisiológicas da gestação",
+    
+    "**Considerações para neonatos:**\n- Ajuste de doses conforme peso e idade gestacional\n- Medir níveis séricos de vancomicina e aminoglicosídeos\n- Monitorar função renal diariamente durante o uso de nefrotóxicos\n- Considerar antibióticos com melhor penetração no SNC para meningites"
 ]
 
 # Lista de fontes
@@ -253,112 +381,76 @@ fontes = [
     "Diretrizes da ANVISA para prevenção de IRAS"
 ]
 
-# Criando DataFrame
-df = pd.DataFrame(data)
-
 # Configurações da barra lateral
 st.sidebar.title("Filtros")
 
 # Filtro por foco
-focos_infecciosos = ["Todos"] + list(df["Foco Infeccioso"])
-foco_selecionado = st.sidebar.selectbox("Selecione o foco infeccioso:", focos_infecciosos)
+foco_selecionado = st.sidebar.selectbox("Selecione o foco infeccioso:", ["Todos"] + focos_infecciosos)
 
 # Opção para mostrar notas
 mostrar_notas = st.sidebar.checkbox("Mostrar notas importantes", value=False)
-
-# Mostrar fontes
 mostrar_fontes = st.sidebar.checkbox("Mostrar fontes", value=False)
-
-# Seleção de tema de cores
-tema_cores = st.sidebar.selectbox(
-    "Escolha o tema de cores:",
-    ["Padrão", "Azul-claro", "Verde-hospital", "Alto contraste"]
-)
-
-# Aplicar temas de cores (CSS personalizado)
-if tema_cores == "Azul-claro":
-    st.markdown("""
-    <style>
-    .main, .stApp {background-color: #f0f5ff;}
-    .stDataFrame {background-color: white !important;}
-    h1, h2, h3 {color: #0047AB !important;}
-    </style>
-    """, unsafe_allow_html=True)
-elif tema_cores == "Verde-hospital":
-    st.markdown("""
-    <style>
-    .main, .stApp {background-color: #f0fff5;}
-    .stDataFrame {background-color: white !important;}
-    h1, h2, h3 {color: #1e7145 !important;}
-    </style>
-    """, unsafe_allow_html=True)
-elif tema_cores == "Alto contraste":
-    st.markdown("""
-    <style>
-    .main, .stApp {background-color: white;}
-    .stDataFrame {background-color: white !important;}
-    h1, h2, h3 {color: black !important;}
-    </style>
-    """, unsafe_allow_html=True)
-
-# Download de PDF
-st.sidebar.markdown("---")
-st.sidebar.subheader("Download")
-st.sidebar.markdown("Baixe a tabela completa em PDF (funcionalidade a ser implementada)")
-if st.sidebar.button("Gerar PDF"):
-    st.sidebar.info("Recurso será disponibilizado na próxima versão.")
 
 # Créditos
 st.sidebar.markdown("---")
 st.sidebar.info("Desenvolvido para uso médico. Sempre consulte protocolos institucionais e avalie cada paciente individualmente.")
 st.sidebar.caption("© 2025 - v1.0")
 
-# Filtrar a tabela conforme seleção
-if foco_selecionado != "Todos":
-    df_filtrada = df[df["Foco Infeccioso"] == foco_selecionado]
+# Construir a tabela baseada na seleção
+if foco_selecionado == "Todos":
+    # Criar DataFrame para todos os focos
+    data = []
+    for foco in focos_infecciosos:
+        data.append({
+            "Foco Infeccioso": foco,
+            "Tratamento para Infecção Comunitária (Hospitalizado)": md_to_html(tratamentos[foco]["comunitario"]),
+            "Tratamento para Infecção com Risco de Patógeno Hospitalar": md_to_html(tratamentos[foco]["hospitalar"])
+        })
+    df = pd.DataFrame(data)
 else:
-    df_filtrada = df
+    # Criar DataFrame para um único foco
+    df = pd.DataFrame([{
+        "Foco Infeccioso": foco_selecionado,
+        "Tratamento para Infecção Comunitária (Hospitalizado)": md_to_html(tratamentos[foco_selecionado]["comunitario"]),
+        "Tratamento para Infecção com Risco de Patógeno Hospitalar": md_to_html(tratamentos[foco_selecionado]["hospitalar"])
+    }])
+
+# Aplicar estilo à tabela
+st.markdown("""
+<style>
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th {
+    background-color: #4682B4;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: bold;
+}
+td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+}
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # Exibir tabela
-st.dataframe(
-    df_filtrada, 
-    use_container_width=True,
-    hide_index=True,
-    height=500 if foco_selecionado == "Todos" else 300
-)
+st.write("## Tabela de Tratamento Antimicrobiano")
+if foco_selecionado != "Todos":
+    st.write(f"**Filtrado por:** {foco_selecionado}")
 
-# Mostrar notas importantes se checkbox ativado
-if mostrar_notas:
-    st.markdown("---")
-    st.subheader("Notas Importantes")
-    
-    # Dividir notas em colunas para melhor visualização
-    col1, col2 = st.columns(2)
-    
-    # Distribuir as notas entre as colunas
-    for i, nota in enumerate(notas_importantes):
-        if i < len(notas_importantes) // 2:
-            with col1:
-                st.markdown(nota)
-                st.markdown("---")
-        else:
-            with col2:
-                st.markdown(nota)
-                st.markdown("---")
-
-# Mostrar fontes se checkbox ativado
-if mostrar_fontes:
-    st.markdown("---")
-    st.subheader("Fontes")
-    
-    for fonte in fontes:
-        st.markdown(f"- {fonte}")
+st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 # Adicionar uma seção de busca rápida por antibiótico
 st.markdown("---")
-st.subheader("Busca rápida por antimicrobiano")
+st.subheader("Busca Rápida por Antimicrobiano")
 
-# Input de busca
 termo_busca = st.text_input("Digite o nome do antimicrobiano:", placeholder="Ex: vancomicina, meropenem...")
 
 # Executar busca se termo foi digitado
@@ -369,87 +461,5 @@ if termo_busca:
     # Buscar nas colunas relevantes
     resultados = []
     
-    for index, row in df.iterrows():
-        if (termo_lower in row["Tratamento para Infecção Comunitária (Hospitalizado)"].lower() or 
-            termo_lower in row["Tratamento para Infecção com Risco de Patógeno Hospitalar"].lower()):
-            resultados.append(row)
-    
-    # Exibir resultados da busca
-    if resultados:
-        st.success(f"Encontrado em {len(resultados)} focos infecciosos:")
-        st.dataframe(pd.DataFrame(resultados), use_container_width=True, hide_index=True)
-    else:
-        st.warning(f"Nenhum resultado encontrado para '{termo_busca}'.")
-
-# Adicionar uma seção de calculadora de dose
-st.markdown("---")
-st.subheader("Calculadora de doses")
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    peso = st.number_input("Peso do paciente (kg)", min_value=0.0, value=70.0, step=0.1)
-    
-with col2:
-    antibiotico = st.selectbox(
-        "Selecione o antimicrobiano:",
-        [
-            "Vancomicina", 
-            "Amicacina", 
-            "Gentamicina", 
-            "Polimixina B",
-            "Meropenem"
-        ]
-    )
-    
-with col3:
-    clearance = st.number_input("Clearance de creatinina (mL/min)", min_value=0, value=90, step=1)
-
-if st.button("Calcular dose"):
-    if antibiotico == "Vancomicina":
-        if clearance >= 60:
-            dose_ataque = round(25 * peso, 0)
-            dose_manutencao = round(15 * peso, 0)
-            st.info(f"Dose de ataque: {dose_ataque} mg IV\nDose de manutenção: {dose_manutencao} mg IV a cada 12h\nConsiderar ajuste com base em níveis séricos.")
-        elif clearance >= 30 and clearance < 60:
-            dose_ataque = round(25 * peso, 0)
-            dose_manutencao = round(10 * peso, 0)
-            st.info(f"Dose de ataque: {dose_ataque} mg IV\nDose de manutenção: {dose_manutencao} mg IV a cada 12-24h\nMonitorar nível sérico.")
-        else:
-            st.warning("Paciente com disfunção renal grave - Consultar farmácia clínica ou nefrologista para dosagem individualizada.")
-            
-    elif antibiotico == "Amicacina":
-        if clearance >= 60:
-            dose = round(15 * peso, 0)
-            st.info(f"Dose: {dose} mg IV uma vez ao dia\nMonitorar função renal.")
-        else:
-            st.warning("Paciente com disfunção renal - Considerar ajuste de dose ou intervalo prolongado. Consultar farmácia clínica.")
-            
-    elif antibiotico == "Gentamicina":
-        if clearance >= 60:
-            dose = round(3 * peso, 0)
-            st.info(f"Dose: {dose} mg IV uma vez ao dia (dose única diária)\nAlternativamente: {dose/3:.1f} mg IV a cada 8h\nMonitorar função renal.")
-        else:
-            st.warning("Paciente com disfunção renal - Considerar ajuste de dose ou intervalo prolongado. Consultar farmácia clínica.")
-            
-    elif antibiotico == "Polimixina B":
-        if clearance >= 30:
-            dose_diaria = round(25000 * peso / 1000000, 2)
-            dose_por_aplicacao = round(dose_diaria / 2, 2)
-            st.info(f"Dose diária: {dose_diaria} milhões UI IV, dividida em 2 aplicações\nDose por aplicação: {dose_por_aplicacao} milhões UI IV a cada 12h\nMonitorar função renal diariamente.")
-        else:
-            st.warning("Paciente com disfunção renal grave - Considerar redução de dose. Consultar farmácia clínica ou nefrologista.")
-            
-    elif antibiotico == "Meropenem":
-        if clearance >= 50:
-            st.info("Dose: 1g IV a cada 8h\nPara infecções graves como meningite: 2g IV a cada 8h")
-        elif clearance >= 25 and clearance < 50:
-            st.info("Dose: 1g IV a cada 12h")
-        elif clearance >= 10 and clearance < 25:
-            st.info("Dose: 500mg IV a cada 12h")
-        else:
-            st.warning("Paciente com disfunção renal grave - Dose: 500mg IV a cada 24h\nConsultar farmácia clínica.")
-
-# Aviso final
-st.markdown("---")
-st.caption("Este aplicativo é apenas uma ferramenta de referência. As condutas devem ser adaptadas ao perfil epidemiológico local e às características individuais do paciente.")
+    for foco in focos_infecciosos:
+        comunitario_lower = tratamentos[foco]["comunitario"].lower()
